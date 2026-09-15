@@ -106,37 +106,104 @@ function nowIso(){ return new Date().toISOString(); }
 let currentCand=null, msgChannel=null, callChannel=null, recipChannel=null, matchChannel=null;
 
 // ================= boot / auth =================
-async function signInAnonymouslyWithRetry(attempts){
-  let lastErr=null;
-  for(let i=0;i<attempts;i++){
-    const { data, error } = await sb.auth.signInAnonymously();
-    if(!error) return data.user.id;
-    lastErr = error;
-    if(error.code !== "anonymous_provider_disabled") break;
-    await wait(1200 * (i+1));
-  }
-  throw lastErr;
-}
 (async function init(){
-  try{
-    const { data:{ session } } = await sb.auth.getSession();
-    if(session){ uid = session.user.id; }
-    else {
-      uid = await signInAnonymouslyWithRetry(4);
-    }
-  }catch(e){
-    console.error("Auth failed", e);
-    toast("Could not connect to Supabase. Check config.js and that Anonymous Sign-Ins are enabled.");
-    return;
-  }
   wireIntroForm();
   wireStaticHandlers();
+  wirePhoneOtpHandlers();
+  try{
+    const { data:{ session } } = await sb.auth.getSession();
+    if(session){ uid = session.user.id; await afterLogin(); }
+    else { show("s-brand"); }
+  }catch(e){
+    console.error("Auth check failed", e);
+    show("s-brand");
+  }
+})();
+
+// Runs once we have a real, phone-verified session — either just now, or
+// resumed from a previous visit.
+async function afterLogin(){
+  await hydrateFromServer();
   if(state.vec) publishProfile().catch(()=>{});
   watchForMatches();
   resume();
-})();
+}
 
-sb.realtime.onOpen? null : null; // no-op placeholder, kept simple
+// If this device has no local quiz progress but this phone number already
+// has a profile in Supabase (e.g. they registered on another device),
+// pull it down instead of making them redo the 24 questions.
+async function hydrateFromServer(){
+  if(state.vec) return;
+  try{
+    const { data } = await sb.from("profiles").select("*").eq("id", uid).maybeSingle();
+    if(data){
+      state.user = { name:data.name, age:String(data.age), gender:data.gender, seek: (data.seek||[]).length>1?"A":(data.seek||["W"])[0], city:data.city, intent:data.intent, bio:data.bio };
+      state.vec = data.vector;
+      state.answers = Array(Q.length).fill(4);
+      save();
+    }
+  }catch(e){ console.error("hydrateFromServer", e); }
+}
+
+// ================= phone + OTP registration =================
+let pendingPhone = null, resendTimer = null;
+function wirePhoneOtpHandlers(){
+  $("#b-brand-start").onclick = ()=> show("s-phone");
+  const phoneEl = $("#f-phone");
+  phoneEl.oninput = ()=>{
+    phoneEl.value = phoneEl.value.replace(/\D/g,"").slice(0,10);
+    $("#b-phone-send").disabled = phoneEl.value.length !== 10;
+  };
+  $("#b-phone-send").onclick = ()=> sendOtp(false);
+  $("#b-otp-edit").onclick = ()=> show("s-phone");
+  const otpEl = $("#f-otp");
+  otpEl.oninput = ()=>{
+    otpEl.value = otpEl.value.replace(/\D/g,"").slice(0,6);
+    $("#b-otp-verify").disabled = otpEl.value.length !== 6;
+    $("#otp-error").hidden = true;
+  };
+  $("#b-otp-verify").onclick = verifyOtpCode;
+  $("#b-otp-resend").onclick = ()=>{ if(!$("#b-otp-resend").disabled) sendOtp(true); };
+}
+async function sendOtp(isResend){
+  const phone = isResend && pendingPhone ? pendingPhone : ("+91" + $("#f-phone").value.trim());
+  const sendBtn = $("#b-phone-send");
+  if(sendBtn) sendBtn.disabled = true;
+  const { error } = await sb.auth.signInWithOtp({ phone });
+  if(sendBtn) sendBtn.disabled = false;
+  if(error){
+    console.error("signInWithOtp", error);
+    toast(/provider|sms|not.*enabled/i.test(error.message) ? "SMS isn't connected on our end yet — try again once it is." : "Couldn't send the code. Check the number and try again.");
+    return;
+  }
+  pendingPhone = phone;
+  $("#otp-phone-display").textContent = phone;
+  $("#f-otp").value=""; $("#b-otp-verify").disabled = true; $("#otp-error").hidden = true;
+  show("s-otp");
+  startResendCooldown();
+}
+function startResendCooldown(){
+  let s = 30;
+  const btn = $("#b-otp-resend");
+  clearInterval(resendTimer);
+  const tick = ()=>{ btn.textContent = s>0 ? `Resend code (${s}s)` : "Resend code"; btn.disabled = s>0; if(s<=0) clearInterval(resendTimer); s--; };
+  tick(); resendTimer = setInterval(tick,1000);
+}
+async function verifyOtpCode(){
+  const code = $("#f-otp").value.trim();
+  $("#b-otp-verify").disabled = true;
+  const { data, error } = await sb.auth.verifyOtp({ phone: pendingPhone, token: code, type: "sms" });
+  if(error){
+    console.error("verifyOtp", error);
+    $("#otp-error").textContent = "That code didn't match. Check it and try again.";
+    $("#otp-error").hidden = false;
+    $("#b-otp-verify").disabled = false;
+    return;
+  }
+  uid = data.user.id;
+  clearInterval(resendTimer);
+  await afterLogin();
+}
 
 // ================= intro form =================
 function seg(id,key){

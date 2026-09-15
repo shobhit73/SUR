@@ -164,6 +164,10 @@ input:focus{outline:2px solid var(--rose);outline-offset:1px}
 .ctrlBtn.danger{background:var(--rose);border-color:var(--rose);color:#fff}
 .ctrlBtn.accept{background:var(--good);border-color:var(--good);color:#fff}
 .callDisc{font-size:12px;color:var(--ink-3);margin-top:10px}
+.phoneRow{display:flex;gap:8px;margin-top:22px}
+.phoneRow .cc{display:flex;align-items:center;padding:0 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink-2);font-weight:600;flex:none}
+.phoneRow input{flex:1}
+.otpInput{margin-top:22px;text-align:center;font-size:28px;letter-spacing:.5em;font-variant-numeric:tabular-nums;padding-left:22px}
 .connbar{position:absolute;top:0;left:0;right:0;background:var(--haldi-soft);color:#8A6116;font-size:12px;text-align:center;padding:6px;z-index:50}
 :root[data-theme="dark"] .connbar{color:var(--haldi)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .connbar{color:var(--haldi)}}
@@ -173,9 +177,10 @@ input:focus{outline:2px solid var(--rose);outline-offset:1px}
 <div class="stage"><div class="phone">
 <div class="connbar" id="connbar" hidden>Reconnecting…</div>
 
-<section class="screen on" id="s-intro">
+<section class="screen on" id="s-brand">
+  <div class="grow"></div>
   <div class="mark">sur <b>/ in tune</b></div>
-  <div class="stack" style="margin-top:34px;gap:16px">
+  <div class="stack" style="margin-top:20px;gap:16px">
     <h1>One match.<br>Chosen for you.</h1>
     <p class="lede">Answer 24 questions about how you actually behave. Your agent reads who you are, then goes and finds the one person worth your attention.</p>
     <div class="thesis">
@@ -185,7 +190,40 @@ input:focus{outline:2px solid var(--rose);outline-offset:1px}
       <div><span class="yes">✓</span> Voice or video, but only once you're both in.</div>
     </div>
   </div>
-  <div class="stack" style="margin-top:28px">
+  <div class="grow"></div>
+  <button class="btn" id="b-brand-start">Get started</button>
+  <p class="foot">You'll verify your phone number next. We never share it.</p>
+</section>
+
+<section class="screen" id="s-phone">
+  <div class="mark">sur <b>/ in tune</b></div>
+  <div class="grow"></div>
+  <h2>What's your number?</h2>
+  <p class="lede" style="margin-top:8px">We'll text you a one-time code to verify it's really you. We never share it or use it for anything else.</p>
+  <div class="phoneRow">
+    <div class="cc">+91</div>
+    <input type="text" id="f-phone" inputmode="numeric" maxlength="10" placeholder="98765 43210" autocomplete="tel-national">
+  </div>
+  <div class="grow"></div>
+  <button class="btn" id="b-phone-send" disabled>Send code</button>
+</section>
+
+<section class="screen" id="s-otp">
+  <div class="mark">sur <b>/ in tune</b></div>
+  <div class="grow"></div>
+  <h2>Enter the code</h2>
+  <p class="lede" style="margin-top:8px">Sent to <b id="otp-phone-display" style="color:var(--ink)"></b>. <button class="link" id="b-otp-edit" style="padding:0;display:inline;font-size:inherit">Edit number</button></p>
+  <input type="text" id="f-otp" class="otpInput" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code">
+  <p class="eyebrow" id="otp-error" style="color:var(--rose);margin-top:10px" hidden></p>
+  <div class="grow"></div>
+  <button class="btn" id="b-otp-verify" disabled>Verify</button>
+  <button class="link" id="b-otp-resend" style="margin-top:2px" disabled>Resend code (30s)</button>
+</section>
+
+<section class="screen" id="s-intro">
+  <div class="eyebrow">A few details</div>
+  <h2 style="margin-top:6px">Tell us who you are.</h2>
+  <div class="stack" style="margin-top:22px">
     <label class="f">Your first name <input type="text" id="f-name" placeholder="Aarav" autocomplete="given-name"></label>
     <div class="row">
       <label class="f" style="flex:1">Age <input type="number" id="f-age" placeholder="28" min="18" max="70"></label>
