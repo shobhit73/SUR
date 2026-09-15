@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sur</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..700,0..100&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --ground:#F3E7E3; --page:#FBF5F3; --surface:#FFFFFF; --surface-2:#F6ECE9;
+  --ink:#241A1E; --ink-2:#6B575D; --ink-3:#A08A90; --line:#E9D9D5;
+  --rose:#B8324F; --rose-soft:#F5DEE3; --haldi:#D9A441; --haldi-soft:#F8ECD2;
+  --neel:#2E3A6B; --neel-soft:#E3E6F3; --good:#2F7A5B;
+  --shadow:0 30px 60px -20px rgba(60,20,30,.35); --radius:28px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#120D10; --page:#1A1317; --surface:#241B20; --surface-2:#2D2228;
+    --ink:#F4E9EB; --ink-2:#C4AEB4; --ink-3:#8A7379; --line:#3A2C32;
+    --rose:#E0587A; --rose-soft:#3D2230; --haldi:#E6B85C; --haldi-soft:#3B301C;
+    --neel:#9AA6E0; --neel-soft:#242B45; --good:#5FBF93;
+    --shadow:0 30px 60px -20px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#120D10; --page:#1A1317; --surface:#241B20; --surface-2:#2D2228;
+  --ink:#F4E9EB; --ink-2:#C4AEB4; --ink-3:#8A7379; --line:#3A2C32;
+  --rose:#E0587A; --rose-soft:#3D2230; --haldi:#E6B85C; --haldi-soft:#3B301C;
+  --neel:#9AA6E0; --neel-soft:#242B45; --good:#5FBF93;
+  --shadow:0 30px 60px -20px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.stage{min-height:100%;display:flex;align-items:center;justify-content:center;padding:28px 12px}
+.phone{width:100%;max-width:400px;min-height:780px;height:calc(100vh - 56px);max-height:860px;background:var(--page);border-radius:40px;box-shadow:var(--shadow);position:relative;overflow:hidden;display:flex;flex-direction:column;border:1px solid var(--line)}
+@media (max-width:480px){.stage{padding:0}.phone{max-width:none;height:100vh;height:100dvh;max-height:none;min-height:0;border-radius:0;border:0;box-shadow:none}}
+.screen{display:none;flex:1;flex-direction:column;min-height:0;overflow:auto;padding:26px 24px 28px;animation:fade .35s ease}
+.screen.on{display:flex}
+@keyframes fade{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes pulse{from{transform:scale(.85);opacity:.55}to{transform:scale(1.3);opacity:0}}
+@media (prefers-reduced-motion:reduce){.screen{animation:none}.bar i{transition:none}.pulse::after{animation:none}}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+h1,h2{font-family:"Fraunces","Georgia",serif;font-variation-settings:"SOFT" 60,"opsz" 40;font-weight:400;margin:0;text-wrap:balance;line-height:1.08}
+h1{font-size:40px;letter-spacing:-.01em} h2{font-size:28px}
+p{margin:0;color:var(--ink-2)}
+.lede{font-size:17px;color:var(--ink-2);max-width:32ch}
+.mark{font-family:"Fraunces",serif;font-variation-settings:"SOFT" 100,"opsz" 144;font-weight:500;font-size:22px;color:var(--rose);letter-spacing:-.01em}
+.mark b{font-weight:300;color:var(--ink-3)}
+.stack{display:flex;flex-direction:column;gap:14px}
+.grow{flex:1}
+label.f{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--ink-2);letter-spacing:.04em;text-transform:uppercase}
+input[type=text],input[type=number]{font:inherit;font-size:16px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink)}
+input:focus{outline:2px solid var(--rose);outline-offset:1px}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;padding:10px 6px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:12px;font:inherit;font-size:14px;font-weight:500;cursor:pointer}
+.seg button.sel{background:var(--ink);color:var(--page);border-color:var(--ink)}
+.seg button:focus-visible{outline:2px solid var(--rose);outline-offset:1px}
+.btn{font:inherit;font-weight:600;font-size:16px;padding:15px 20px;border-radius:16px;border:0;cursor:pointer;background:var(--rose);color:#fff;width:100%;transition:transform .08s ease}
+.btn:active{transform:scale(.985)} .btn:disabled{opacity:.45;cursor:default}
+.btn.ghost{background:transparent;color:var(--ink-2);border:1px solid var(--line)}
+.btn.quiet{background:var(--surface-2);color:var(--ink)}
+.btn:focus-visible{outline:2px solid var(--neel);outline-offset:2px}
+.row{display:flex;gap:10px} .row .btn{flex:1}
+.thesis{display:grid;gap:10px;margin-top:6px}
+.thesis div{display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start;font-size:15px;color:var(--ink-2)}
+.thesis span{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700}
+.thesis .no{background:var(--rose-soft);color:var(--rose)}
+.thesis .yes{background:var(--haldi-soft);color:#8A6116}
+:root[data-theme="dark"] .thesis .yes{color:var(--haldi)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .thesis .yes{color:var(--haldi)}}
+.qhead{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.bar{height:5px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;background:var(--rose);border-radius:4px;transition:width .3s ease}
+.dim{font-size:12px;font-weight:600;color:var(--rose);letter-spacing:.06em;text-transform:uppercase}
+.qtext{font-family:"Fraunces",serif;font-variation-settings:"SOFT" 40,"opsz" 32;font-size:27px;line-height:1.2;text-wrap:balance;margin:14px 0 0}
+.scale{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:8px}
+.scale button{aspect-ratio:1;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);cursor:pointer;display:grid;place-items:center;font:inherit;font-weight:600;color:var(--ink-3);transition:transform .1s ease,background .15s ease}
+.scale button:nth-child(1){transform:scale(1.0)} .scale button:nth-child(2){transform:scale(.86)} .scale button:nth-child(3){transform:scale(.72)} .scale button:nth-child(4){transform:scale(.86)} .scale button:nth-child(5){transform:scale(1.0)}
+.scale button.sel{background:var(--rose);border-color:var(--rose);color:#fff}
+.scale button:focus-visible{outline:2px solid var(--neel);outline-offset:3px}
+.scale-lbl{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-3);margin-top:6px}
+.qnav{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:20px}
+.link{background:none;border:0;font:inherit;color:var(--ink-2);cursor:pointer;padding:8px 0;font-weight:500}
+.link:disabled{opacity:.3;cursor:default}
+.radar{width:100%;aspect-ratio:1;display:block;max-width:300px;margin:0 auto}
+.sig{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px 18px}
+.sig h3{font-family:"Fraunces",serif;font-weight:500;font-variation-settings:"SOFT" 80;margin:0 0 4px;font-size:20px;color:var(--ink)}
+.sig p{font-size:15px}
+.traits{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;font-weight:600;padding:5px 10px;border-radius:999px;background:var(--surface-2);color:var(--ink-2)}
+.chip.hi{background:var(--rose-soft);color:var(--rose)} .chip.lo{background:var(--neel-soft);color:var(--neel)}
+.agent{display:flex;align-items:center;gap:12px}
+.orb{width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--haldi),var(--rose) 70%);flex:none;position:relative}
+.orb.live::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--rose);opacity:.5;animation:pulse 1.6s ease-out infinite}
+.agent .who{font-weight:600} .agent .what{font-size:13px;color:var(--ink-3)}
+.log{display:flex;flex-direction:column;gap:0;border-left:1.5px solid var(--line);margin-left:8px;padding-left:18px}
+.log div{position:relative;padding:8px 0;color:var(--ink-3);font-size:15px;opacity:.45;transition:opacity .3s ease}
+.log div::before{content:"";position:absolute;left:-24.5px;top:16px;width:11px;height:11px;border-radius:50%;background:var(--line)}
+.log div.done{opacity:1;color:var(--ink)} .log div.done::before{background:var(--rose)} .log div b{font-weight:600;color:var(--rose)}
+.avatar{border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-family:"Figtree",sans-serif;flex:none;position:relative}
+.avatar.sm{width:36px;height:36px;font-size:13px} .avatar.md{width:48px;height:48px;font-size:16px} .avatar.lg{width:66px;height:66px;font-size:23px} .avatar.xl{width:84px;height:84px;font-size:28px}
+.avatar.pulse::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:2px solid var(--rose);opacity:.45;animation:pulse 1.7s ease-out infinite}
+.mcard{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.mtop{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.mwho{display:flex;gap:12px;align-items:center;min-width:0}
+.mname{font-family:"Fraunces",serif;font-variation-settings:"SOFT" 70,"opsz" 40;font-size:28px;line-height:1.05;font-weight:400}
+.mmeta{color:var(--ink-3);font-size:14px;margin-top:2px}
+.score{text-align:right;flex:none}
+.score b{display:block;font-family:"Fraunces",serif;font-variation-settings:"SOFT" 100,"opsz" 96;font-weight:500;font-size:32px;line-height:1;color:var(--rose);font-variant-numeric:tabular-nums}
+.score span{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.quote{font-family:"Fraunces",serif;font-variation-settings:"SOFT" 40;font-style:italic;font-size:16px;color:var(--ink);line-height:1.35}
+.quote::before{content:"\201C ";color:var(--haldi)}
+.note{background:var(--neel-soft);border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.note .eyebrow{color:var(--neel)}
+.note h3{font-family:"Fraunces",serif;font-weight:500;font-variation-settings:"SOFT" 80;margin:0;font-size:19px;line-height:1.2;color:var(--ink)}
+.note p{font-size:15px;color:var(--ink);white-space:pre-line}
+.dims{display:flex;flex-direction:column;gap:8px}
+.drow{display:grid;grid-template-columns:92px 1fr auto;gap:10px;align-items:center;font-size:13px}
+.drow .n{color:var(--ink-2);font-weight:500}
+.track{height:8px;border-radius:4px;background:var(--surface-2);position:relative}
+.track i{position:absolute;top:-2px;width:12px;height:12px;border-radius:50%;transform:translateX(-50%)}
+.track i.u{background:var(--rose);z-index:2} .track i.m{background:var(--haldi)}
+.track em{position:absolute;top:2px;height:4px;background:var(--line);border-radius:2px}
+.drow .tag{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap}
+.drow .tag.al{color:var(--good)} .drow .tag.co{color:var(--neel)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--ink-3)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.held{font-size:13px;color:var(--ink-3);text-align:center;line-height:1.4}
+.held b{color:var(--ink-2);font-weight:600}
+.reasons{display:flex;flex-wrap:wrap;gap:6px}
+.reasons button{font:inherit;font-size:13px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);cursor:pointer}
+.reasons button:hover{border-color:var(--rose);color:var(--rose)}
+.toast{position:absolute;left:16px;right:16px;bottom:18px;background:var(--ink);color:var(--page);padding:12px 16px;border-radius:14px;font-size:14px;text-align:center;opacity:0;transform:translateY(8px);transition:all .25s ease;pointer-events:none;z-index:40}
+.toast.show{opacity:1;transform:none}
+.foot{font-size:12px;color:var(--ink-3);text-align:center;margin-top:auto;padding-top:14px}
+.status{font-size:13px;color:var(--ink-3);display:flex;align-items:center;gap:8px}
+.status i{width:8px;height:8px;border-radius:50%;background:var(--haldi);display:inline-block} .status i.on{background:var(--good)}
+.waitwrap{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.mutualWrap{display:flex;justify-content:center}
+.mutualWrap .avatar{box-shadow:0 0 0 4px var(--page)} .mutualWrap .avatar:last-child{margin-left:-20px}
+.chatHead{display:flex;align-items:center;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.chatHead .who{flex:1;min-width:0} .chatHead .nm{font-weight:600;font-size:16px} .chatHead .mt{font-size:12px;color:var(--ink-3)}
+.iconBtn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;font-size:16px;flex:none;color:var(--ink)}
+.iconBtn:hover{border-color:var(--rose)}
+.chatBody{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:14px 2px}
+.bubble{max-width:78%;padding:10px 13px;border-radius:16px;font-size:15px;line-height:1.35;width:fit-content}
+.bubble.them{background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px;align-self:flex-start}
+.bubble.me{background:var(--rose);color:#fff;border-bottom-right-radius:4px;align-self:flex-end}
+.bubble.sys{align-self:center;background:var(--surface-2);color:var(--ink-3);font-size:12px;border-radius:999px;padding:5px 12px}
+.composer{display:flex;gap:8px;padding-top:12px;border-top:1px solid var(--line);align-items:center}
+.composer input{flex:1;font:inherit;font-size:15px;padding:12px 14px;border:1px solid var(--line);border-radius:20px;background:var(--surface);color:var(--ink)}
+.composer input:focus{outline:2px solid var(--rose);outline-offset:1px}
+.sendBtn{width:44px;height:44px;border-radius:50%;border:0;background:var(--rose);color:#fff;font-size:16px;cursor:pointer;flex:none}
+.sendBtn:disabled{opacity:.4}
+.callOverlay{position:absolute;inset:0;background:var(--page);z-index:30;display:flex;flex-direction:column;align-items:center;padding:52px 24px 32px;text-align:center}
+.callOverlay[hidden]{display:none}
+.callTop{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:36px}
+.callMode{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.callName{font-family:"Fraunces",serif;font-variation-settings:"SOFT" 60,"opsz" 32;font-size:24px}
+.callTimer{font-variant-numeric:tabular-nums;color:var(--ink-2);font-size:15px}
+.callBadge{font-size:11px;font-weight:600;color:var(--rose);letter-spacing:.04em}
+.ctrlBtn{flex:1;padding:14px;border-radius:16px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+.ctrlBtn.danger{background:var(--rose);border-color:var(--rose);color:#fff}
+.ctrlBtn.accept{background:var(--good);border-color:var(--good);color:#fff}
+.callDisc{font-size:12px;color:var(--ink-3);margin-top:10px}
+.connbar{position:absolute;top:0;left:0;right:0;background:var(--haldi-soft);color:#8A6116;font-size:12px;text-align:center;padding:6px;z-index:50}
+:root[data-theme="dark"] .connbar{color:var(--haldi)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .connbar{color:var(--haldi)}}
+</style>
+</head>
+<body>
+<div class="stage"><div class="phone">
+<div class="connbar" id="connbar" hidden>Reconnecting…</div>
+
+<section class="screen on" id="s-intro">
+  <div class="mark">sur <b>/ in tune</b></div>
+  <div class="stack" style="margin-top:34px;gap:16px">
+    <h1>One match.<br>Chosen for you.</h1>
+    <p class="lede">Answer 24 questions about how you actually behave. Your agent reads who you are, then goes and finds the one person worth your attention.</p>
+    <div class="thesis">
+      <div><span class="no">✕</span> No feed. No swiping. No 200 unread requests.</div>
+      <div><span class="no">✕</span> No caste-filter-first. Values and temperament first.</div>
+      <div><span class="yes">✓</span> One introduction at a time, with the reason it was made.</div>
+      <div><span class="yes">✓</span> Voice or video, but only once you're both in.</div>
+    </div>
+  </div>
+  <div class="stack" style="margin-top:28px">
+    <label class="f">Your first name <input type="text" id="f-name" placeholder="Aarav" autocomplete="given-name"></label>
+    <div class="row">
+      <label class="f" style="flex:1">Age <input type="number" id="f-age" placeholder="28" min="18" max="70"></label>
+      <label class="f" style="flex:2">City <input type="text" id="f-city" placeholder="Bengaluru"></label>
+    </div>
+    <label class="f">I am <div class="seg" id="f-gender"><button data-v="W">Woman</button><button data-v="M">Man</button><button data-v="N">Non-binary</button></div></label>
+    <label class="f">Looking for <div class="seg" id="f-seek"><button data-v="W">Women</button><button data-v="M">Men</button><button data-v="A">Everyone</button></div></label>
+    <label class="f">Intent <div class="seg" id="f-intent"><button data-v="M">Marriage</button><button data-v="L">Long-term</button><button data-v="O">Open to both</button></div></label>
+    <label class="f">One line about you (optional) <input type="text" id="f-bio" placeholder="I will drive an hour for good chai."></label>
+  </div>
+  <div class="grow"></div>
+  <button class="btn" id="b-start" style="margin-top:22px" disabled>Begin the 24 questions</button>
+  <p class="foot">Real matching: you may meet another real person using this app, alongside 38 example profiles.</p>
+</section>
+
+<section class="screen" id="s-quiz">
+  <div class="qhead"><div class="dim" id="q-dim">Warmth</div><div class="eyebrow" id="q-count">1 / 24</div></div>
+  <div class="bar"><i id="q-bar" style="width:4%"></i></div>
+  <p class="eyebrow" style="margin-top:26px">How true is this of you?</p>
+  <p class="qtext" id="q-text"></p>
+  <div class="grow"></div>
+  <div class="scale" id="q-scale"><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button></div>
+  <div class="scale-lbl"><span>Not me at all</span><span>Exactly me</span></div>
+  <div class="qnav"><button class="link" id="q-back">← Back</button><button class="link" id="q-skip" style="color:var(--ink-3)">Fill the rest for demo →</button></div>
+</section>
+
+<section class="screen" id="s-profile">
+  <div class="eyebrow">Your emotional signature</div>
+  <h2 style="margin-top:6px" id="p-title">Warm, steady, rooted.</h2>
+  <canvas class="radar" id="p-radar" width="600" height="600" style="margin-top:10px"></canvas>
+  <div class="sig"><h3 id="p-head"></h3><p id="p-body"></p></div>
+  <div class="traits" id="p-traits" style="margin-top:12px"></div>
+  <div class="grow"></div>
+  <p style="font-size:13px;color:var(--ink-3);margin:16px 0 10px">This is your vector: six numbers your agent will carry into every search. Nobody browses it. It is never shown as a score to others.</p>
+  <button class="btn" id="b-find">Send my agent to find someone</button>
+  <button class="btn ghost" id="b-retake" style="margin-top:10px">Retake questions</button>
+</section>
+
+<section class="screen" id="s-agent">
+  <div class="agent"><div class="orb live"></div><div><div class="who">Your agent</div><div class="what">Working on your behalf</div></div></div>
+  <h2 style="margin-top:28px">Reading the room<br>so you don't have to.</h2>
+  <div class="log" id="a-log" style="margin-top:26px"></div>
+  <div class="grow"></div>
+  <div class="status" id="a-status"><i></i><span>Preparing</span></div>
+</section>
+
+<section class="screen" id="s-match">
+  <div class="qhead"><div class="eyebrow">Today's introduction</div><div class="eyebrow" id="m-date"></div></div>
+  <div class="mcard" style="margin-top:14px">
+    <div class="mtop">
+      <div class="mwho"><div class="avatar md" id="m-avatar"></div><div><div class="mname" id="m-name"></div><div class="mmeta" id="m-meta"></div></div></div>
+      <div class="score"><b id="m-score">—</b><span>in tune</span></div>
+    </div>
+    <p class="quote" id="m-quote"></p>
+    <div class="dims" id="m-dims"></div>
+    <div class="legend"><span><i style="background:var(--rose)"></i>You</span><span><i style="background:var(--haldi)"></i>Them</span></div>
+  </div>
+  <div class="note" style="margin-top:12px">
+    <div class="eyebrow">Why your agent chose them</div>
+    <h3 id="n-head"></h3>
+    <p id="n-body"></p>
+  </div>
+  <p class="held" style="margin:16px 0 12px" id="m-held"></p>
+  <div class="row"><button class="btn quiet" id="b-pass">Not for me</button><button class="btn" id="b-hello">Say hello</button></div>
+  <div id="m-why" hidden style="margin-top:12px">
+    <p style="font-size:13px;margin-bottom:8px">Tell your agent why, so tomorrow's pick is better:</p>
+    <div class="reasons" id="m-reasons"></div>
+  </div>
+  <div class="grow"></div>
+</section>
+
+<section class="screen" id="s-waiting">
+  <div class="grow"></div>
+  <div class="waitwrap">
+    <div class="avatar xl pulse" id="wa-avatar"></div>
+    <h2 style="margin-top:18px">Waiting on <span id="wa-name"></span>.</h2>
+    <p style="margin-top:8px" id="wa-line">You said hello. Your agent will let you know the moment they say it back.</p>
+  </div>
+  <div class="grow"></div>
+  <button class="btn ghost" id="b-wait-back">Do something else meanwhile</button>
+</section>
+
+<section class="screen" id="s-mutual">
+  <div class="grow"></div>
+  <div class="mutualWrap"><div class="avatar xl" id="mu-you"></div><div class="avatar xl" id="mu-them"></div></div>
+  <h2 style="text-align:center;margin-top:20px">You're both in.</h2>
+  <p style="text-align:center;margin-top:8px" id="mu-line"></p>
+  <div class="grow"></div>
+  <button class="btn" id="b-mutual-start">Start chatting</button>
+</section>
+
+<section class="screen" id="s-chat">
+  <div class="chatHead">
+    <div class="avatar md" id="chat-avatar"></div>
+    <div class="who"><div class="nm" id="chat-name"></div><div class="mt" id="chat-meta"></div></div>
+    <button class="iconBtn" id="b-call-voice" title="Voice call">📞</button>
+    <button class="iconBtn" id="b-call-video" title="Video call">🎥</button>
+  </div>
+  <div class="chatBody" id="chat-body"></div>
+  <div class="composer">
+    <input type="text" id="chat-input" placeholder="Type a message" autocomplete="off">
+    <button class="sendBtn" id="chat-send">➤</button>
+  </div>
+</section>
+
+<div class="callOverlay" id="s-call" hidden>
+  <div class="callTop">
+    <div class="callMode" id="call-mode-label">Voice call</div>
+    <div class="avatar xl" id="call-avatar"></div>
+    <div class="callName" id="call-who"></div>
+    <div class="eyebrow" id="call-state">Calling…</div>
+    <div class="callTimer" id="call-timer" hidden>00:00</div>
+    <div class="callBadge" id="call-other-badge"></div>
+  </div>
+  <div class="callDisc">Simulated call — real audio and video would need a signalling and relay service on top of this.</div>
+  <div class="row" id="call-actions" style="margin-top:auto"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
