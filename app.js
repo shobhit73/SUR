@@ -106,14 +106,23 @@ function nowIso(){ return new Date().toISOString(); }
 let currentCand=null, msgChannel=null, callChannel=null, recipChannel=null, matchChannel=null;
 
 // ================= boot / auth =================
+async function signInAnonymouslyWithRetry(attempts){
+  let lastErr=null;
+  for(let i=0;i<attempts;i++){
+    const { data, error } = await sb.auth.signInAnonymously();
+    if(!error) return data.user.id;
+    lastErr = error;
+    if(error.code !== "anonymous_provider_disabled") break;
+    await wait(1200 * (i+1));
+  }
+  throw lastErr;
+}
 (async function init(){
   try{
     const { data:{ session } } = await sb.auth.getSession();
     if(session){ uid = session.user.id; }
     else {
-      const { data, error } = await sb.auth.signInAnonymously();
-      if(error) throw error;
-      uid = data.user.id;
+      uid = await signInAnonymouslyWithRetry(4);
     }
   }catch(e){
     console.error("Auth failed", e);
@@ -418,9 +427,9 @@ async function openChat(){
     .subscribe();
   if(callChannel) sb.removeChannel(callChannel);
   const { data:callRow } = await sb.from("calls").select("*").eq("match_a", state.matchA).eq("match_b", state.matchB).maybeSingle();
-  renderCallRow(callRow);
+  renderCallRow(callRow, true); // initial paint only — never re-log a call that had already ended before this page load
   callChannel = sb.channel("calls-"+state.matchA+"-"+state.matchB)
-    .on("postgres_changes", {event:"*", schema:"public", table:"calls", filter:`match_a=eq.${state.matchA}`}, p=>{ if((p.new||p.old).match_b===state.matchB) renderCallRow(p.new); })
+    .on("postgres_changes", {event:"*", schema:"public", table:"calls", filter:`match_a=eq.${state.matchA}`}, p=>{ if((p.new||p.old).match_b===state.matchB) renderCallRow(p.new, false); })
     .subscribe();
 }
 let renderedMsgs=[];
@@ -475,15 +484,15 @@ async function toggleSelf(field, val, current){
   const merged = {...(current||{}), [uid]: val};
   await sb.from("calls").update({[col]: merged}).eq("match_a",state.matchA).eq("match_b",state.matchB);
 }
-function renderCallRow(row){
+function renderCallRow(row, isInitialPaint){
   if(!row){ $("#s-call").hidden=true; clearInterval(callTimerInt); return; }
   const c = {status:row.status, mode:row.mode, by:row.by_id, startedAt:ts(row.started_at), connectedAt:ts(row.connected_at), endedAt:ts(row.ended_at), endReason:row.end_reason, muted:row.muted||{}, cameraOff:row.camera_off||{}};
-  renderCall(c);
+  renderCall(c, isInitialPaint);
 }
-function renderCall(c){
+function renderCall(c, isInitialPaint){
   const ov=$("#s-call");
   if(!c || c.status==="ended"){
-    if(c && c.by===uid) maybeLogCallEnd(c);
+    if(c && c.by===uid && !isInitialPaint) maybeLogCallEnd(c);
     if(c && c.by!==uid && c.endReason && c.endReason!=="hangup"){
       toast(c.endReason==="declined"?"Call declined":c.endReason==="no_answer"?"No answer":"Call ended");
     }
