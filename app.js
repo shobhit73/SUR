@@ -109,10 +109,11 @@ let currentCand=null, msgChannel=null, callChannel=null, recipChannel=null, matc
 (async function init(){
   wireIntroForm();
   wireStaticHandlers();
-  wirePhoneOtpHandlers();
+  wireAuthHandlers();
+  wireHomeHandlers();
   try{
     const { data:{ session } } = await sb.auth.getSession();
-    if(session){ uid = session.user.id; await afterLogin(); }
+    if(session){ uid = session.user.id; state.email = session.user.email || state.email; await afterLogin(); }
     else { show("s-brand"); }
   }catch(e){
     console.error("Auth check failed", e);
@@ -120,66 +121,121 @@ let currentCand=null, msgChannel=null, callChannel=null, recipChannel=null, matc
   }
 })();
 
-// Runs once we have a real, phone-verified session — either just now, or
-// resumed from a previous visit.
+// Runs once we have a real, verified session — either just now, or resumed
+// from a previous visit.
 async function afterLogin(){
   await hydrateFromServer();
-  if(state.vec) publishProfile().catch(()=>{});
   watchForMatches();
   resume();
 }
 
-// If this device has no local quiz progress but this phone number already
-// has a profile in Supabase (e.g. they registered on another device),
-// pull it down instead of making them redo the 24 questions.
+// Pull this account's profile down from Supabase, so someone signing in on a
+// new device keeps their details and doesn't redo the 24 questions.
 async function hydrateFromServer(){
-  if(state.vec) return;
   try{
     const { data } = await sb.from("profiles").select("*").eq("id", uid).maybeSingle();
-    if(data){
-      state.user = { name:data.name, age:String(data.age), gender:data.gender, seek: (data.seek||[]).length>1?"A":(data.seek||["W"])[0], city:data.city, intent:data.intent, bio:data.bio };
+    if(!data) return;
+    if(!state.user.name){
+      state.user = {
+        name:data.name, age:String(data.age), gender:data.gender,
+        seek:(data.seek||[]).length>1?"A":(data.seek||["W"])[0],
+        city:data.city||"", intent:data.intent, bio:data.bio||"",
+      };
+    }
+    if(!state.vec && data.quiz_completed){
       state.vec = data.vector;
       state.answers = Array(Q.length).fill(4);
-      save();
     }
+    save();
   }catch(e){ console.error("hydrateFromServer", e); }
 }
 
-// ================= phone + OTP registration =================
-let pendingPhone = null, resendTimer = null;
-function wirePhoneOtpHandlers(){
-  $("#b-brand-start").onclick = ()=> show("s-phone");
-  const phoneEl = $("#f-phone");
-  phoneEl.oninput = ()=>{
-    phoneEl.value = phoneEl.value.replace(/\D/g,"").slice(0,10);
-    $("#b-phone-send").disabled = phoneEl.value.length !== 10;
+// ================= home =================
+function wireHomeHandlers(){
+  $("#b-home-profile").onclick = ()=>{ if(state.vec){ renderProfile(); show("s-profile"); } else { show("s-intro"); } };
+  $("#b-home-signout").onclick = signOut;
+  $("#b-profile-home").onclick = goHome;
+  $("#b-chat-home").onclick = goHome;
+}
+function goHome(){ renderHome(); show("s-home"); }
+function renderHome(){
+  const u = state.user;
+  paintAvatar("#home-avatar", {name:u.name, id:uid});
+  $("#home-greet").textContent = `Hi, ${u.name}.`;
+  const label=$("#home-card-label"), title=$("#home-card-title"), body=$("#home-card-body"), cta=$("#home-card-cta");
+  if(state.matchA && state.matchOther){
+    label.textContent = "Your introduction";
+    title.textContent = `${state.matchOther.name} is waiting.`;
+    body.textContent = "You both said hello. Pick up where you left off.";
+    cta.textContent = "Open chat";
+    cta.onclick = openChat;
+  } else if(!state.vec){
+    label.textContent = "Your next step";
+    title.textContent = "24 questions, about 4 minutes.";
+    body.textContent = "This is what your agent reads before it goes looking. Nobody else ever sees your answers.";
+    cta.textContent = "Start the questions";
+    cta.onclick = ()=>{ state.i = Math.max(0, state.answers.findIndex(a=>a===null)); if(state.i<0) state.i=0; renderQ(); show("s-quiz"); };
+  } else {
+    label.textContent = "Ready when you are";
+    title.textContent = "Your agent has what it needs.";
+    body.textContent = "One introduction at a time, with the reason it was made.";
+    cta.textContent = "Find someone";
+    cta.onclick = runAgent;
+  }
+  const t = $("#home-traits");
+  t.innerHTML = state.vec
+    ? DIMS.map((dm,i)=>{ const v=state.vec[i]; const cls = v>=3.75?"hi": v<=2.25?"lo":""; return `<span class="chip ${cls}">${dm.n} ${v.toFixed(1)}</span>`; }).join("")
+    : `<span class="chip">${esc(u.city||"India")}</span><span class="chip">${esc(({M:"Marriage",L:"Long-term",O:"Open to both"})[u.intent]||"")}</span>`;
+}
+async function signOut(){
+  try{ await sb.auth.signOut(); }catch(e){}
+  try{ localStorage.removeItem(LS); }catch(e){}
+  location.reload();
+}
+
+// ================= email + OTP registration =================
+let pendingEmail = null, resendTimer = null;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+function wireAuthHandlers(){
+  $("#b-brand-start").onclick = ()=> show("s-email");
+  const emailEl = $("#f-email");
+  emailEl.oninput = ()=>{
+    $("#b-email-send").disabled = !EMAIL_RE.test(emailEl.value.trim());
+    $("#email-error").hidden = true;
   };
-  $("#b-phone-send").onclick = ()=> sendOtp(false);
-  $("#b-otp-edit").onclick = ()=> show("s-phone");
+  emailEl.addEventListener("keydown", e=>{ if(e.key==="Enter" && !$("#b-email-send").disabled) sendOtp(false); });
+  $("#b-email-send").onclick = ()=> sendOtp(false);
+  $("#b-otp-edit").onclick = ()=> show("s-email");
   const otpEl = $("#f-otp");
   otpEl.oninput = ()=>{
     otpEl.value = otpEl.value.replace(/\D/g,"").slice(0,6);
     $("#b-otp-verify").disabled = otpEl.value.length !== 6;
     $("#otp-error").hidden = true;
   };
+  otpEl.addEventListener("keydown", e=>{ if(e.key==="Enter" && !$("#b-otp-verify").disabled) verifyOtpCode(); });
   $("#b-otp-verify").onclick = verifyOtpCode;
   $("#b-otp-resend").onclick = ()=>{ if(!$("#b-otp-resend").disabled) sendOtp(true); };
 }
 async function sendOtp(isResend){
-  const phone = isResend && pendingPhone ? pendingPhone : ("+91" + $("#f-phone").value.trim());
-  const sendBtn = $("#b-phone-send");
-  if(sendBtn) sendBtn.disabled = true;
-  const { error } = await sb.auth.signInWithOtp({ phone });
-  if(sendBtn) sendBtn.disabled = false;
+  const email = isResend && pendingEmail ? pendingEmail : $("#f-email").value.trim().toLowerCase();
+  if(!EMAIL_RE.test(email)) return;
+  const sendBtn = $("#b-email-send");
+  if(sendBtn){ sendBtn.disabled = true; sendBtn.textContent = "Sending…"; }
+  const { error } = await sb.auth.signInWithOtp({ email, options:{ shouldCreateUser:true } });
+  if(sendBtn){ sendBtn.disabled = false; sendBtn.textContent = "Send code"; }
   if(error){
     console.error("signInWithOtp", error);
-    toast(/provider|sms|not.*enabled/i.test(error.message) ? "SMS isn't connected on our end yet — try again once it is." : "Couldn't send the code. Check the number and try again.");
+    const msg = /rate|limit|seconds/i.test(error.message)
+      ? "Too many codes requested. Wait a minute and try again."
+      : "Couldn't send the code. Check the address and try again.";
+    $("#email-error").textContent = msg; $("#email-error").hidden = false;
     return;
   }
-  pendingPhone = phone;
-  $("#otp-phone-display").textContent = phone;
+  pendingEmail = email;
+  $("#otp-dest-display").textContent = email;
   $("#f-otp").value=""; $("#b-otp-verify").disabled = true; $("#otp-error").hidden = true;
   show("s-otp");
+  $("#f-otp").focus();
   startResendCooldown();
 }
 function startResendCooldown(){
@@ -191,16 +247,21 @@ function startResendCooldown(){
 }
 async function verifyOtpCode(){
   const code = $("#f-otp").value.trim();
-  $("#b-otp-verify").disabled = true;
-  const { data, error } = await sb.auth.verifyOtp({ phone: pendingPhone, token: code, type: "sms" });
+  const btn = $("#b-otp-verify");
+  btn.disabled = true; btn.textContent = "Verifying…";
+  const { data, error } = await sb.auth.verifyOtp({ email: pendingEmail, token: code, type: "email" });
+  btn.textContent = "Verify";
   if(error){
     console.error("verifyOtp", error);
-    $("#otp-error").textContent = "That code didn't match. Check it and try again.";
+    $("#otp-error").textContent = /expired/i.test(error.message)
+      ? "That code has expired. Send a fresh one."
+      : "That code didn't match. Check it and try again.";
     $("#otp-error").hidden = false;
-    $("#b-otp-verify").disabled = false;
+    btn.disabled = false;
     return;
   }
   uid = data.user.id;
+  state.email = pendingEmail; save();
   clearInterval(resendTimer);
   await afterLogin();
 }
@@ -218,7 +279,13 @@ function wireIntroForm(){
   seg("#f-gender","gender"); seg("#f-seek","seek"); seg("#f-intent","intent");
   ["name","age","city","bio"].forEach(k=>{ const el=$("#f-"+k); if(state.user[k]) el.value=state.user[k]; el.oninput=()=>{ state.user[k]=el.value.trim(); checkIntro(); }; });
   checkIntro();
-  $("#b-start").onclick=()=>{ save(); state.i = state.answers.findIndex(a=>a===null); if(state.i<0) state.i=0; renderQ(); show("s-quiz"); };
+  $("#b-start").onclick=async()=>{
+    const btn=$("#b-start"); btn.disabled=true; btn.textContent="Saving…";
+    save();
+    await publishProfile().catch(e=>console.error(e));
+    btn.textContent="Save and continue"; btn.disabled=false;
+    goHome();
+  };
 }
 function checkIntro(){ const u=state.user; $("#b-start").disabled = !(u.name && u.age>=18 && u.gender && u.seek && u.intent); }
 
@@ -321,7 +388,12 @@ async function publishProfile(){
   const seekArr = u.seek==="A" ? ["W","M","N"] : [u.seek];
   const { error } = await sb.from("profiles").upsert({
     id: uid, name:u.name, age:+u.age, gender:u.gender, seek:seekArr,
-    city:u.city||"", intent:u.intent, bio:u.bio||"", vector:state.vec, updated_at:nowIso(),
+    city:u.city||"", intent:u.intent, bio:u.bio||"",
+    // Before the quiz is done we still save the row so the profile exists,
+    // with a neutral vector and quiz_completed false so matching skips it.
+    vector: state.vec || [3,3,3,3,3,3],
+    quiz_completed: !!state.vec,
+    updated_at:nowIso(),
   });
   if(error) console.error("publishProfile", error);
 }
@@ -346,7 +418,7 @@ async function candidates(){
   const ageOk = c => Math.abs(c.age-u.age)<=7;
   let real=[];
   try{
-    const { data, error } = await sb.from("profiles").select("*").neq("id", uid);
+    const { data, error } = await sb.from("profiles").select("*").neq("id", uid).eq("quiz_completed", true);
     if(!error && data) real = data.map(rowToCand);
   }catch(e){ real=[]; }
   const npc = NPC.map(npcToCand);
@@ -470,7 +542,7 @@ function enterMatch(m, isResume){
   state.matchA=m.a; state.matchB=m.b; state.matchWith = m.a===uid? m.b : m.a; save();
   loadOtherProfile(state.matchWith).then(other=>{
     state.matchOther=other; state.matchScore=score(state.vec, other.vector); save();
-    if(isResume) openChat(); else showMutual(other);
+    if(isResume){ if($("#s-home").classList.contains("on")) renderHome(); } else showMutual(other);
   });
 }
 function showMutual(other){
@@ -609,9 +681,9 @@ async function maybeLogCallEnd(c){
 
 // ================= resume / theme =================
 function resume(){
-  if(state.matchA && state.matchOther){ openChat(); }
-  else if(state.vec){ renderProfile(); show("s-profile"); }
-  else if(state.answers.some(a=>a!==null) && state.user.name){ state.i=Math.max(0,state.answers.findIndex(a=>a===null)); renderQ(); show("s-quiz"); }
-  else show("s-intro");
+  const u = state.user;
+  const detailsDone = u.name && u.age && u.gender && u.seek && u.intent;
+  if(!detailsDone){ show("s-intro"); return; }
+  goHome();
 }
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{ if(state.vec && $("#s-profile").classList.contains("on")) radar($("#p-radar"),state.vec); });

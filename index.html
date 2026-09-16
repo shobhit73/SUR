@@ -195,29 +195,46 @@ input:focus{outline:2px solid var(--rose);outline-offset:1px}
   <p class="foot">You'll verify your phone number next. We never share it.</p>
 </section>
 
-<section class="screen" id="s-phone">
+<section class="screen" id="s-email">
   <div class="mark">sur <b>/ in tune</b></div>
   <div class="grow"></div>
-  <h2>What's your number?</h2>
-  <p class="lede" style="margin-top:8px">We'll text you a one-time code to verify it's really you. We never share it or use it for anything else.</p>
-  <div class="phoneRow">
-    <div class="cc">+91</div>
-    <input type="text" id="f-phone" inputmode="numeric" maxlength="10" placeholder="98765 43210" autocomplete="tel-national">
-  </div>
+  <h2>What's your email?</h2>
+  <p class="lede" style="margin-top:8px">We'll send you a one-time code to verify it's really you. We never share it or use it for anything else.</p>
+  <input type="email" id="f-email" placeholder="you@example.com" autocomplete="email" inputmode="email" style="margin-top:22px">
+  <p class="eyebrow" id="email-error" style="color:var(--rose);margin-top:10px" hidden></p>
   <div class="grow"></div>
-  <button class="btn" id="b-phone-send" disabled>Send code</button>
+  <button class="btn" id="b-email-send" disabled>Send code</button>
 </section>
 
 <section class="screen" id="s-otp">
   <div class="mark">sur <b>/ in tune</b></div>
   <div class="grow"></div>
   <h2>Enter the code</h2>
-  <p class="lede" style="margin-top:8px">Sent to <b id="otp-phone-display" style="color:var(--ink)"></b>. <button class="link" id="b-otp-edit" style="padding:0;display:inline;font-size:inherit">Edit number</button></p>
+  <p class="lede" style="margin-top:8px">Sent to <b id="otp-dest-display" style="color:var(--ink)"></b>. <button class="link" id="b-otp-edit" style="padding:0;display:inline;font-size:inherit">Change email</button></p>
   <input type="text" id="f-otp" class="otpInput" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code">
   <p class="eyebrow" id="otp-error" style="color:var(--rose);margin-top:10px" hidden></p>
   <div class="grow"></div>
   <button class="btn" id="b-otp-verify" disabled>Verify</button>
   <button class="link" id="b-otp-resend" style="margin-top:2px" disabled>Resend code (30s)</button>
+</section>
+
+<section class="screen" id="s-home">
+  <div class="qhead">
+    <div><div class="eyebrow">Welcome back</div><h2 style="margin-top:4px" id="home-greet">Hi.</h2></div>
+    <div class="avatar md" id="home-avatar"></div>
+  </div>
+  <div class="mcard" style="margin-top:20px;gap:10px">
+    <div class="eyebrow" id="home-card-label">Your next step</div>
+    <h3 style="font-family:Fraunces,serif;font-weight:500;font-size:20px;margin:0" id="home-card-title"></h3>
+    <p style="font-size:15px" id="home-card-body"></p>
+    <button class="btn" id="home-card-cta" style="margin-top:4px"></button>
+  </div>
+  <div class="traits" id="home-traits" style="margin-top:18px"></div>
+  <div class="grow"></div>
+  <div class="row" style="margin-top:18px">
+    <button class="btn ghost" id="b-home-profile">My profile</button>
+    <button class="btn ghost" id="b-home-signout">Sign out</button>
+  </div>
 </section>
 
 <section class="screen" id="s-intro">
@@ -235,8 +252,8 @@ input:focus{outline:2px solid var(--rose);outline-offset:1px}
     <label class="f">One line about you (optional) <input type="text" id="f-bio" placeholder="I will drive an hour for good chai."></label>
   </div>
   <div class="grow"></div>
-  <button class="btn" id="b-start" style="margin-top:22px" disabled>Begin the 24 questions</button>
-  <p class="foot">Real matching: you may meet another real person using this app, alongside 38 example profiles.</p>
+  <button class="btn" id="b-start" style="margin-top:22px" disabled>Save and continue</button>
+  <p class="foot">Only what's needed to set up your profile. You can add more later.</p>
 </section>
 
 <section class="screen" id="s-quiz">
@@ -259,7 +276,10 @@ input:focus{outline:2px solid var(--rose);outline-offset:1px}
   <div class="grow"></div>
   <p style="font-size:13px;color:var(--ink-3);margin:16px 0 10px">This is your vector: six numbers your agent will carry into every search. Nobody browses it. It is never shown as a score to others.</p>
   <button class="btn" id="b-find">Send my agent to find someone</button>
-  <button class="btn ghost" id="b-retake" style="margin-top:10px">Retake questions</button>
+  <div class="row" style="margin-top:10px">
+    <button class="btn ghost" id="b-profile-home">Home</button>
+    <button class="btn ghost" id="b-retake">Retake questions</button>
+  </div>
 </section>
 
 <section class="screen" id="s-agent">
@@ -317,6 +337,7 @@ input:focus{outline:2px solid var(--rose);outline-offset:1px}
 
 <section class="screen" id="s-chat">
   <div class="chatHead">
+    <button class="iconBtn" id="b-chat-home" title="Home">←</button>
     <div class="avatar md" id="chat-avatar"></div>
     <div class="who"><div class="nm" id="chat-name"></div><div class="mt" id="chat-meta"></div></div>
     <button class="iconBtn" id="b-call-voice" title="Voice call">📞</button>

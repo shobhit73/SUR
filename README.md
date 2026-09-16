@@ -15,18 +15,29 @@ This creates `profiles`, `likes`, `matches`, `messages`, `calls`, turns on
 Row Level Security and a policy per table, and switches on Realtime for the
 four tables the app listens to live.
 
-### 2. Turn on anonymous sign-ins
-Supabase Dashboard → **Authentication** → **Sign In / Providers** →
-**Anonymous Sign-Ins** → enable it.
+### 2. Run migration 02
+Same place, paste `supabase-migration-02.sql` and Run. It adds the
+`quiz_completed` flag, so profiles created before someone takes the quiz
+aren't offered as matches.
 
-The app gives every visitor a real Supabase auth identity without asking
-for an email or password yet. It's a stopgap for this phase, not the final
-plan — real email/Google sign-in is still on the roadmap, and Supabase
-supports upgrading an anonymous session to a real account later without
-losing the person's data.
+### 3. Make the email send a 6-digit code, not a magic link
+Supabase Dashboard → **Authentication** → **Email Templates** → **Magic
+Link**. By default the template only contains `{{ .ConfirmationURL }}`,
+which sends a clickable link. Add the token so the email carries a code:
 
-Once both are done, reload the app and the "could not connect" toast goes
-away.
+```
+Your Sur verification code is: {{ .Token }}
+```
+
+Without this change, people get a link instead of the 6-digit code the app
+asks for.
+
+### 4. Know the email rate limit
+Supabase's built-in email service is for testing only and allows just a
+couple of emails per hour on the free tier. For real users, connect your
+own SMTP provider (Resend, SendGrid, Amazon SES) under **Project Settings
+→ Authentication → SMTP Settings**. Until then, expect "too many codes
+requested" during testing.
 
 ## Running it locally
 
